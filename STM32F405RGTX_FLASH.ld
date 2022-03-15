@@ -72,7 +72,7 @@ SECTIONS
   
   
  
-  /* 以下略 */
+  /* ????? */
 
   /* The program code and other data into "FLASH" Rom type memory */
   .text :

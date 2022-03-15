@@ -84,10 +84,11 @@ void stop(){
 void Motor(int16_t MotorL,int16_t MotorR)
 {
 	if(MotorL > 0 ){
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_11, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_SET);
+
 
 	}else if(MotorL < 0){
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_11, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_RESET);
 		MotorL = -MotorL;
 	}
 	if(MotorR > 0 ){
@@ -98,8 +99,8 @@ void Motor(int16_t MotorL,int16_t MotorR)
 		MotorR = -MotorR;
 
 	}
-	if (MotorR > 1800) MotorR = 1800;
-	if (MotorL > 1800) MotorL = 1800;
+	if (MotorR > 2000) MotorR = 2000;
+	if (MotorL > 2000) MotorL = 2000;
 
 	__HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_4, MotorL);
 	__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_2, MotorR);

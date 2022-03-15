@@ -55,8 +55,8 @@
 #define diameter 22 //Tire diameter
 #define resolution 512 //
 #define Gear 2.14//Gear ratio
-#define Accm 6
-#define Decm 4
+#define Accm 5.7
+#define Decm 1.5
 #define BACKUP_FLASH_SECTOR_NUM     FLASH_SECTOR_1
 #define BACKUP_FLASH_SECTOR_SIZE    1024*16
 
@@ -77,7 +77,6 @@ TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim6;
-TIM_HandleTypeDef htim7;
 TIM_HandleTypeDef htim8;
 
 UART_HandleTypeDef huart6;
@@ -88,7 +87,7 @@ uint16_t di[SENSOR_NUMBER];                  //Maximum and minimum difference
 uint16_t sens[SENSOR_NUMBER];
 uint16_t sensRatio[SENSOR_NUMBER];
 uint16_t b[SENSOR_NUMBER];
- uint16_t Speed = 1300;
+ uint16_t Speed = 1500;
 uint16_t Speedbuff;
  int count= 1200;
 float sensL, sensR;
@@ -113,18 +112,24 @@ float ang_average =0;
 extern float ang;
 float load_log=0;
 float ahs;
+float ing=0;
+float ing2 = 0;
 uint32_t callog_adress;
 uint32_t loadlog_adress;
 uint32_t plan_velo_adress;
 uint32_t cros_adress;
-
+uint8_t street =0;
 uint32_t leftm=0;
+int crosbuff=0;
 uint8_t left_floag=0;
-
-
+uint16_t inse=0;
+uint8_t kro=0;
+uint8_t side_maker=0;
+uint16_t side_log=0;
 double secondsp[6100]={0};
 float loada[6100]={0};
-int ri[12]={0};
+int ri[20]={0};
+int log_K[30]={0};
   uint16_t work_ram[BACKUP_FLASH_SECTOR_SIZE] __attribute__ ((aligned(4)));
  char _backup_flash_start;
 
@@ -145,7 +150,6 @@ static void MX_TIM4_Init(void);
 static void MX_TIM8_Init(void);
 static void MX_USART6_UART_Init(void);
 static void MX_TIM6_Init(void);
-static void MX_TIM7_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -175,6 +179,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* AdcHandle) {
 
 void init()
 {
+
 	uint8_t l=0;
 	if(HAL_ADC_Start_DMA(&hadc1, (uint32_t *) analog, SENSOR_NUMBER) != HAL_OK){
 	  Error_Handler();
@@ -211,7 +216,7 @@ void init()
 	Kd = work_ram[2];
 	Kp = Kp/100;
 	Ki = Ki/1000000;
-	Kd = Kd/100;
+	Kd = Kd/1000;
 	printf("MAX: %d %d %d %d %d %d %d %d %d %d %d %d %d\r\n", work_ram[3],work_ram[4],work_ram[5],work_ram[6],work_ram[7],work_ram[8],work_ram[9],work_ram[10],work_ram[11],work_ram[12],work_ram[13],work_ram[14],work_ram[15]);
 	while(l < SENSOR_NUMBER){
 			di[l] = work_ram[l+3];
@@ -243,6 +248,7 @@ int log_Speed(double h){
 
 }
 float mon_speed;
+
 void log_Cal(){
 	uint i=0;
 	double Ca,Lo;
@@ -266,6 +272,7 @@ void log_Cal(){
 		loadlog_adress+= 0x04;
 		LED(2);
 		i++;
+
 	}
 	callog_adress = start_adress_sector7;
 	loadlog_adress = start_adress_sector9;
@@ -284,22 +291,26 @@ void log_Cal(){
 		callog_adress+= 0x04;
 		loadlog_adress+= 0x04;
 	}
-	for(int s=0;s<i;s++){
-		mon_speed = (float)secondsp[s];
-		//printf("%lf\n\r",secondsp[s]);
-		//HAL_Delay(10);
-	}
+//	for(int s=0;s<i;s++){
+//		mon_speed = (float)secondsp[s];
+//		//printf("%lf\n\r",secondsp[s]);
+//		HAL_Delay(1);
+//	}
+
 }
 
 void sidemaker(){
 	//static int h= 0;
-	if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_2) ==0 && count > 100 && stoping > 30){
+	if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_2) ==0 && count > 500 && stoping > 45 && left_floag==0){
 		floag=1;
 		stoping =0;
 		stop_flag++;
 
 	}
-	if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_10) ==0)left_floag=1;
+	if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_10) ==0){
+		left_floag=1;
+	}else left_floag=0;
+
 
 	if(Speed < Speedbuff && stop_flag ==0) Speed= Speed + 10;;
 
@@ -312,42 +323,120 @@ void driv_Log(float u){
 	  loadlog_adress+= 0x04;
 	 // u=*(float*)log_adress ;
 }
+void stret(){
+		if(street==1){
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);
+		}else if(street==0)HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_RESET);
+
+}
+int iuo=0;
 void driv_log(){
-	static uint8_t i=0,z=0;
-	static uint crosbuff=0;
+	static uint16_t i=0,z=0;
+
+	static uint16_t ou=0;
+	int16_t track=0;
 	if(con==1 && floag==1 && second==0){
-		 	driv_Log(ahs/a);
+		ing = ahs/a;
+		driv_Log(ahs/a);
+		if(kro==1)crosbuff=0;
+		if(ing>=(-0.05) && ing<= 0.05 || kro==1) {
+			inse++;
+			ou=0;
+		 	if(inse>=20 || kro==1){
+		 		street=1;
+		 		inse=31;
+		 		kro=0;
+
+		 	}
+		 	}else if(kro==0){
+
+		 		ou++;
+		 		if(ou>=10 ){
+//		 			street=0;
+//		 			inse=0;
+		 		}
+		 	}
+		if(kro==0)crosbuff++;
+
 			log_count++;
 			con=0;
 			a=0;
 			ahs =0;
 			LED(3);
 		}
-		if(con==1 && floag==1 && second==1){
-			if(secondsp[log_count]<1300)secondsp[log_count]=1300;
+		if(con==1 && floag==1 && second==1 ){//
+			ing = ahs/a;
+			if(kro==1)crosbuff=0;
+			if(ing>=(-0.08) && ing<= 0.08 || kro==1) {
+				inse++;
+				ou=0;
+			 	if(inse>=15 || kro==1){
+			 		street=1;
+			 		inse=31;
+			 		kro=0;
+
+			 	}
+			}else if(kro==0){
+			 		ou++;
+
+			 		if(ou>=5 ){
+//			 			street=0;
+//			 			inse=0;
+			 		}
+				}
+			if(kro==0)crosbuff++;
+			if(secondsp[log_count]<1300)secondsp[log_count]=1400;
 			Speed =secondsp[log_count];
+			a=0;
+			ahs =0;
 			con=0;
 			log_count++;
 			i++;
 			LED(1);
 		}
-		if(cros==1 &&second==0 && crosbuff!= log_count && crosbuff+3 <= log_count){
+//		if(cros==1 &&second==0 && crosbuff!= log_count && crosbuff+3 <= log_count){
+//			FLASH_Write_Word_S(cros_adress,log_count);
+//			cros_adress+= 0x04;
+//			crosbuff=log_count;
+//			cros=0;
+//
+//		}
+		if(side_maker==1 && second==0){
 			FLASH_Write_Word_S(cros_adress,log_count);
 			cros_adress+= 0x04;
-			crosbuff=log_count;
-			cros=0;
+			side_maker=0;
 
 		}
-		if(cros==1 &&second==1 && crosbuff != log_count && crosbuff+3 <= log_count){
-			ri[z] = log_count;
-			log_count =  *(uint32_t*)cros_adress;
 
-			crosbuff=log_count;
-			cros_adress += 0x04;
-			cros=0;
+//		if(cros==1 &&second==1 && crosbuff != log_count && crosbuff+4 <= log_count){
+//			ri[z] = log_count;
+//			log_count =  *(uint32_t*)cros_adress;
+//			crosbuff=log_count;
+//			cros_adress += 0x04;
+//			cros=0;
+//			z++;
+//
+//		}
+		if(side_maker==1 && second==1){
+			ri[z] = log_count;
+			for(int gh=0;side_log<=gh;gh++){
+				track = log_K[gh]-log_count;
+				if(track>=-(18) && track<=18){
+					log_count=log_K[gh];
+					break;
+				}
+			}
+
+
+//			log_count =  *(uint32_t*)cros_adress;
+//			crosbuff=log_count;
+//			cros_adress += 0x04;
+//			cros=0;
+			side_maker=0;
 			z++;
 
 		}
+
 }
 
 
@@ -369,8 +458,12 @@ void driv_log(){
  	 int g;
  	 float lo=0;
  	 int z=0;
+ 	 float gh=0;
+ 	 float y=0;
+ 	float ik=0;
  	while(1){
  		while(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_1)){
+ 			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_RESET);
  			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_15)==0) i++;
  			HAL_Delay(100);
  			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_2)==0) i--;
@@ -380,17 +473,19 @@ void driv_log(){
  			HAL_Delay(100);
 
  		}
- 		HAL_Delay(1000);
+ 		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);
+
  		switch(i){
  			case 1:
- 				LED(1);
+ 				LED(1);//blue
  				lcd_clear();
  				lcd_locate(0,0);
  				lcd_printf("IMU");
+ 				HAL_Delay(1000);
  				IMU_init();
  				off_angle();
  				break;
- 			case 2:
+ 			case 2://green
  				LED(2);
  				lcd_clear();
  				lcd_locate(0,0);
@@ -398,7 +493,7 @@ void driv_log(){
  				ADCinit();
  				break;
  			case 3:
- 				LED(3);
+ 				LED(3);//light blue
  				Speedbuff = Speed;
  				lcd_clear();
  				lcd_locate(0,0);
@@ -407,9 +502,11 @@ void driv_log(){
  				Speed = Speedbuff;
  				break;
  			case 4:
- 				LED(4);
- 				lcd_clear();
 
+ 				LED(4);//red
+ 				lcd_clear();
+ 				lcd_init();
+ 				leftm=0;
  				Speedbuff = Speed;
  				Speed =0;
  				stop_flag=0;
@@ -429,54 +526,68 @@ void driv_log(){
  						stop_flag=0;
  						break;
  					}
- 					if(left_floag==1 && (ahs>-1 && ahs<1)){
- 						while(1){
- 							if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_10) ==1){
- 								left_floag=0;
- 								leftm++;
- 								break;
- 							}
- 						}
+ 					if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_10)==0 && street==1 && crosbuff >=20 && HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_2) ==1){
+
+							while(1){
+								if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_10) ==1){
+									left_floag=0;
+									leftm++;
+									street=0;
+									side_maker=1;
+									//kro=0;
+									//crosbuff=0;
+//									street=0;
+//									inse =0;
+									break;
+								}
+							}
+							street=0;
+
+							inse =0;
+
  					}
+
 
  				}
  				Speed = Speedbuff;
- 				printf("%d\r\n",log_count);
+ 				printf("%d\r\n",leftm);
  				log_count=0;
  				break;
  			case 5:
- 				LED(5);
+ 				LED(5);//pink
+ 				lcd_init();
+
  				lcd_clear();
  				Flash_load();
  				log_Cal();
  				cros_adress = start_adress_sector10;
+ 				lcd_printf("%d",leftm);
+ 				printf("side :%d\r\n",leftm);
  				while(1){
  					log_count = *(int*) cros_adress;
  					if(isnan(*(float*) cros_adress) != 0)break;
-
- 				  printf("%d\n\r", log_count);
- 				  cros_adress+=0x04;
+ 					log_K[z] = log_count;
+ 					printf("%d\n\r", log_count);
+ 					cros_adress+=0x04;
+ 					z++;
  				}
+ 				side_log=z;
  				for( z=0;z<=12;z++){
  					printf("%d\n\r",ri[z]);
  				}
- //				printf("-------\n\r");
- //				for( z=0;z<=3000;z++){
- //					printf("%d,%lf\n\r",z,secondsp[i]);
- //					if(secondsp[z]<=0)break;
- //				}
+
 
  				break ;
- 			case 6:
+ 			case 6://yellow
  				Flash_load();
- 				HAL_Delay(500);
+ 				HAL_Delay(1500);
  				second=1;
  				log_count=0;
  				Speedbuff = Speed;
  				Speed =0;
  				stop_flag=0;
  				stoping=20;
-
+ 				leftm=0;
  				callog_adress = start_adress_sector7;
  				loadlog_adress = start_adress_sector9;
  				cros_adress = start_adress_sector10;
@@ -491,18 +602,25 @@ void driv_log(){
  						stop_flag=0;
  						break;
  					}
- 					if(left_floag==1  && (ahs>-1 && ahs<1)){
- 						while(1){
- 							if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_10) ==1){
- 								left_floag=0;
- 								leftm++;
- 								break;
- 							}
- 						}
+ 					if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_10)==0 && street==1 && crosbuff >=10 && HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_2) ==1){
+							while(1){
+								if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_10) ==1){
+									left_floag=0;
+									leftm++;
+									street=0;
+									side_maker=1;
+
+									break;
+								}
+							}
+							street=0;
+							inse =0;
  					}
+
+
  				}
  				break;
- 			case 7:
+ 			case 7://white
  				acc_Speed();
  				break;
 
@@ -518,6 +636,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	ahs += calc_angle();
 	a++;
 	driv_log();
+	stret();
 	}
 
 /* USER CODE END 0 */
@@ -535,20 +654,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-
-
-
-
-
-
-
-
-
-
-
-
-
-	HAL_Init();
+  HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -573,18 +679,21 @@ int main(void)
   MX_TIM8_Init();
   MX_USART6_UART_Init();
   MX_TIM6_Init();
-  MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
 
 
   init();
 
 
-
 //  tuning();
-  HAL_Delay(200);
+  HAL_Delay(600);
 //
   IMU_init();
+//  HAL_TIM_Base_Start_IT(&htim6);
+
+//  HAL_Delay(10000);
+
+//  stop();
 
 // off_angle();
 //  ADCinit();
@@ -599,9 +708,18 @@ int main(void)
 
 
   while(1){
-
-
-
+	//  calc_angle();
+//	  L = TIM1 -> CNT;
+//	  printf("%d\r\n",L);
+//	  speedget();
+//	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
+//	  __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_2, 200);
+//	  printf("%f\r\n",speedget());
+	  //printf("%d,\r\n",TIM3 -> CNT);
+//	  Motor(000,2000);
+//	  HAL_Delay(3000);
+//	  Motor(100,-100);
+	 // HAL_Delay(1000);
 
   }
 
@@ -630,10 +748,10 @@ void SystemClock_Config(void)
   * in the RCC_OscInitTypeDef structure.
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 6;
+  RCC_OscInitStruct.PLL.PLLM = 4;
   RCC_OscInitStruct.PLL.PLLN = 168;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 4;
@@ -992,9 +1110,9 @@ static void MX_TIM4_Init(void)
 
   /* USER CODE END TIM4_Init 1 */
   htim4.Instance = TIM4;
-  htim4.Init.Prescaler = 0;
+  htim4.Init.Prescaler = 1;
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim4.Init.Period = 1800;
+  htim4.Init.Period = 2000;
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_PWM_Init(&htim4) != HAL_OK)
@@ -1061,44 +1179,6 @@ static void MX_TIM6_Init(void)
 }
 
 /**
-  * @brief TIM7 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM7_Init(void)
-{
-
-  /* USER CODE BEGIN TIM7_Init 0 */
-
-  /* USER CODE END TIM7_Init 0 */
-
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
-
-  /* USER CODE BEGIN TIM7_Init 1 */
-
-  /* USER CODE END TIM7_Init 1 */
-  htim7.Instance = TIM7;
-  htim7.Init.Prescaler = 0;
-  htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim7.Init.Period = 65535;
-  htim7.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim7) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim7, &sMasterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN TIM7_Init 2 */
-
-  /* USER CODE END TIM7_Init 2 */
-
-}
-
-/**
   * @brief TIM8 Initialization Function
   * @param None
   * @retval None
@@ -1118,9 +1198,9 @@ static void MX_TIM8_Init(void)
 
   /* USER CODE END TIM8_Init 1 */
   htim8.Instance = TIM8;
-  htim8.Init.Prescaler = 1;
+  htim8.Init.Prescaler = 4;
   htim8.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim8.Init.Period = 1800;
+  htim8.Init.Period = 2000;
   htim8.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim8.Init.RepetitionCounter = 0;
   htim8.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
@@ -1231,7 +1311,10 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_6, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_11, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_11|GPIO_PIN_12, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, GPIO_PIN_RESET);
@@ -1261,8 +1344,15 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PA11 */
-  GPIO_InitStruct.Pin = GPIO_PIN_11;
+  /*Configure GPIO pin : PC8 */
+  GPIO_InitStruct.Pin = GPIO_PIN_8;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PA11 PA12 */
+  GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_12;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

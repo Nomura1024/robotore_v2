@@ -54,8 +54,8 @@ void SpeedCtrl(){
 	int16_t MotorL=0,MotorR=0,sensmotor=0;
 	float speedval;
 	//static float speedval_I ;
-	float sKp = 1.5;//1.8
-	float sKi= 10;//10
+	float sKp = 2.5;//1.8
+	float sKi= 18;//10
 
 
 	speedval = Speed  - speedget();
@@ -84,11 +84,14 @@ float speedget()
 	static int i =0;
 	L = TIM1 -> CNT;
 	R = TIM3 -> CNT;
+
 	R = R -32767;
 	L = (65535 - L)-32768;
 
+
+
 	val=(L+R)/2;
-	speedget = (((32.2/2048)*val)/T);
+	speedget = (((32.3/4096)*val)/T);
 
 	speedbuffg += speedget*T;
 
@@ -104,5 +107,6 @@ float speedget()
 	}
 	TIM1 -> CNT = 32767;
 	TIM3 -> CNT = 32767;
+
 	return speedget;
 }

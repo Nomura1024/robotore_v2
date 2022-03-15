@@ -12,7 +12,7 @@
 #include "stdio.h"
 #define BACKUP_FLASH_SECTOR_SIZE    1024*16
 #define PI 3.141592
-
+#define R_IMU 0.01
 
 extern  uint16_t work_ram[BACKUP_FLASH_SECTOR_SIZE] __attribute__ ((aligned(4)));
  char _backup_flash_start;
@@ -43,10 +43,14 @@ void off_angle(){
 }
 float calc_angle(){
 	float omega_z=0;
+	static float pre_zg;
 	//float angle;
 	read_gyro_data();
 	omega_z = (((float)zg-ang_average) / 16.4) * PI / 180;
 	//angle = angle+ (omega_z * 0.01);
+
+	omega_z= ((R_IMU)*(omega_z) + (1.0 - (R_IMU))* (pre_zg)); // lowpath filter
+	pre_zg =  omega_z;
 
 	return omega_z;
 }

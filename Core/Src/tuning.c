@@ -45,11 +45,11 @@ while(1){
 			lcd_printf("speed");
 			lcd_locate(0,1);
 			lcd_printf("%d",Speedbuff);
-			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_15)==0){
+			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_2)==0){
 				lcd_clear();
 				Speedbuff = Speedbuff+100;
 			}
-			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_2)==0){
+			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_15)==0){
 				lcd_clear();
 				Speedbuff = Speedbuff-100;
 			}
@@ -60,7 +60,7 @@ while(1){
 				work_ram[2] = Kd;
 				Kp = (double)Kp/100;
 				Ki = (double)Ki/1000000;
-				Kd = (double)Kd/100;
+				Kd = (double)Kd/1000;
 				Flash_store();
 				return ;
 			}
@@ -73,11 +73,11 @@ while(1){
 		lcd_printf("Kp");
 		lcd_locate(0,1);
 		lcd_printf("%f",Kp);
-		if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_15)==0){
+		if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_2)==0){
 			lcd_clear();
 			Kp=Kp+1;
 		}
-		if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_2)==0){
+		if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_15)==0){
 			lcd_clear();
 			Kp=Kp-1;
 		}
@@ -88,7 +88,7 @@ while(1){
 			work_ram[2] = Kd;
 			Kp = (double)Kp/100;
 			Ki = (double)Ki/1000000;
-			Kd = (double)Kd/100;
+			Kd = (double)Kd/1000;
 			Flash_store();
 			return ;
 		}
@@ -101,11 +101,11 @@ while(1){
 			lcd_printf("Ki");
 			lcd_locate(0,1);
 			lcd_printf("%f",Ki);
-			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_15)==0){
+			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_2)==0){
 				lcd_clear();
 				Ki=Ki+1;
 			}
-			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_2)==0){
+			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_15)==0){
 				lcd_clear();
 				Ki=Ki-1;
 			}
@@ -116,7 +116,7 @@ while(1){
 				work_ram[2] = Kd;
 				Kp = (double)Kp/100;
 				Ki = (double)Ki/1000000;
-				Kd = (double)Kd/100;
+				Kd = (double)Kd/1000;
 				Flash_store();
 				return ;
 			}
@@ -129,11 +129,11 @@ while(1){
 				lcd_printf("Kd");
 				lcd_locate(0,1);
 				lcd_printf("%f",Kd);
-				if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_15)==0){
+				if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_2)==0){
 					lcd_clear();
 					Kd=Kd+1;
 				}
-				if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_2)==0){
+				if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_15)==0){
 					lcd_clear();
 					Kd=Kd-1;
 				}
@@ -144,7 +144,7 @@ while(1){
 					work_ram[2] = Kd;
 					Kp = (double)Kp/100;
 					Ki = (double)Ki/1000000;
-					Kd = (double)Kd/100;
+					Kd = (double)Kd/1000;
 					Flash_store();
 					return ;
 				}
@@ -170,12 +170,12 @@ void acc_Speed(){
 			lcd_locate(0,1);
 			lcd_printf("%d",work_ram[32]);
 
-			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_15)==0){
+			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_2)==0){
 				lcd_clear();
 				work_ram[32]=work_ram[32]+100;
 				printf("%d",work_ram[32]);
 			}
-			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_2)==0){
+			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_15)==0){
 				lcd_clear();
 				work_ram[32]=work_ram[32]-100;
 				printf("%d",work_ram[32]);
@@ -195,12 +195,12 @@ void acc_Speed(){
 			lcd_locate(0,1);
 			lcd_printf("%d",work_ram[33]);
 
-			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_15)==0){
+			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_2)==0){
 				lcd_clear();
 				work_ram[33]=work_ram[33]+100;
 				printf("%d",work_ram[33]);
 			}
-			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_2)==0){
+			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_15)==0){
 				lcd_clear();
 				work_ram[33]=work_ram[33]-100;
 				printf("%d",work_ram[33]);
@@ -219,12 +219,12 @@ void acc_Speed(){
 			lcd_locate(0,1);
 			lcd_printf("%d",work_ram[34]);
 
-			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_15)==0){
+			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_2)==0){
 				lcd_clear();
 				work_ram[34]=work_ram[34]+100;
 				printf("%d",work_ram[34]);
 			}
-			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_2)==0){
+			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_15)==0){
 				lcd_clear();
 				work_ram[34]=work_ram[34]-100;
 				printf("%d",work_ram[34]);
@@ -243,12 +243,12 @@ void acc_Speed(){
 			lcd_locate(0,1);
 			lcd_printf("%d",work_ram[35]);
 
-			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_15)==0){
+			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_2)==0){
 				lcd_clear();
 				work_ram[35]=work_ram[35]+100;
 				printf("%d",work_ram[35]);
 			}
-			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_2)==0){
+			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_15)==0){
 				lcd_clear();
 				work_ram[35]=work_ram[35]-100;
 				printf("%d",work_ram[35]);
@@ -267,12 +267,12 @@ void acc_Speed(){
 			lcd_locate(0,1);
 			lcd_printf("%d",work_ram[36]);
 
-			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_15)==0){
+			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_2)==0){
 				lcd_clear();
 				work_ram[36]=work_ram[36]+100;
 				printf("%d",work_ram[32]);
 			}
-			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_2)==0){
+			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_15)==0){
 				lcd_clear();
 				work_ram[36]=work_ram[36]-100;
 				printf("%d",work_ram[36]);
@@ -291,12 +291,12 @@ void acc_Speed(){
 			lcd_locate(0,1);
 			lcd_printf("%d",work_ram[37]);
 
-			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_15)==0){
+			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_2)==0){
 				lcd_clear();
 				work_ram[37]=work_ram[37]+100;
 				printf("%d",work_ram[37]);
 			}
-			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_2)==0){
+			if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_15)==0){
 				lcd_clear();
 				work_ram[37]=work_ram[37]-100;
 				printf("%d",work_ram[37]);

@@ -33,7 +33,7 @@ extern uint16_t b[SENSOR_NUMBER];
 extern float sensL, sensR;
 extern  int count;
 extern uint8_t cros;
-
+extern uint8_t kro;
 extern uint16_t work_ram[BACKUP_FLASH_SECTOR_SIZE] __attribute__ ((aligned(4)));
 char _backup_flash_start;
 
@@ -77,6 +77,7 @@ void ADCinit(){
 		lcd_clear();lcd_locate(0,0);
 		lcd_printf("ADCinit");
 		LED(2);
+
 	}
 	i = 0;
 	 printf("MAX: %d %d %d %d %d %d %d %d %d %d %d %d %d\r\n", a[0],a[1],a[2],a[3],a[4],a[5],a[6],a[7],a[8],a[9],a[10],a[11],a[12]);
@@ -107,25 +108,27 @@ void sensGet(){
 	for(i=0; i<13; i++){
 		sensRatio[i] = (1000.0f/(float)di[i])*((float)(sens[i]-b[i]));
 	}
-	for(i=2;i<6;i++){
+	for(i=0;i<6;i++){
 		sensL += sensRatio[i];
 	}
-	for(i=7;i<11;i++){
+	for(i=7;i<13;i++){
 		sensR += sensRatio[i];
 	}
-	if(sensRatio[7]<800)j =0;
-	if(sensRatio[1]<500)count =0;
+	if(sensRatio[7]<600)j =0;
+	if(sensRatio[12]<600)count =0;
 
 			er = sensR+sensL;
-	if(er > 800) j++;
-	if(er > 800 && j>=300 ) error();
+	if(er > 1000) j++;
+	if(er > 1000 && j>=200 ) error();
 
 
-	if(er<1200 && k>=0) {
+	if(er<6200 && k>0) {
 		cros=1;
 		k=0;
+		kro=1;
+		LED(5);
 	}else cros=0;
 
-	if(er > 1200)k++;
+	if(er > 1300)k++;
 
 }
